@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#d6336c">
+  <meta name="description" content="Create beautiful AI-generated invitation cards for any occasion">
+  <title>InvitationAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Roboto&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #fff0f5; /* Light pink background */
+      color: #333;
+    }
+
+    nav {
+      background: #fff;
+      padding: 20px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #eee;
+    }
+
+    nav h1 {
+      color: #d6336c;
+      font-size: 40px;
+      font-family: 'Playfair Display', serif;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 20px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      margin-bottom: 30px;
+      color: #735050;
+      font-family: 'Playfair Display', serif;
+      font-size: 35px;
+    }
+
+    form {
+      text-align: left;
+    }
+
+    label {
+      font-weight: 600;
+      margin-top: 15px;
+      display: block;
+      color: #444;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 30px;
+      padding: 14px;
+      background-color: #d6336c;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    button:hover {
+      background-color: #c42c61;
+    }
+
+    #result {
+      margin-top: 60px;
+      background: #fff0f4;
+      border-left: 5px solid #d6336c;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .invitation-card {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      min-height: 200px;
+      padding: 25px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      line-height: 1.5;
+      color: #333;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .invitation-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 1;
+      background-repeat: repeat;
+      background-position: center;
+    }
+
+    /* Event-specific patterns with enhanced designs */
+    .invitation-card[data-event="Wedding"]::before {
+      background-image: 
+        radial-gradient(circle at center, currentColor 2px, transparent 2px),
+        radial-gradient(circle at center, currentColor 2px, transparent 2px),
+        linear-gradient(45deg, currentColor 1px, transparent 1px),
+        linear-gradient(-45deg, currentColor 1px, transparent 1px);
+      background-size: 30px 30px, 30px 30px, 40px 40px, 40px 40px;
+      background-position: 0 0, 15px 15px, 0 0, 0 0;
+      opacity: 0.08;
+    }
+
+    .invitation-card[data-event="Birthday"]::before {
+      background-image: 
+        radial-gradient(circle, currentColor 4px, transparent 4px),
+        radial-gradient(circle, currentColor 2px, transparent 2px),
+        radial-gradient(circle, currentColor 3px, transparent 3px),
+        radial-gradient(circle, currentColor 1px, transparent 1px);
+      background-size: 60px 60px, 40px 40px, 30px 30px, 20px 20px;
+      background-position: 0 0, 20px 20px, 35px 35px, 15px 15px;
+      opacity: 0.09;
+    }
+
+    .invitation-card[data-event="Corporate Event"]::before {
+      background-image: 
+        linear-gradient(45deg, currentColor 25%, transparent 25%),
+        linear-gradient(-45deg, currentColor 25%, transparent 25%),
+        linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 15px 15px, 15px 15px;
+      opacity: 0.06;
+    }
+
+    /* Enhanced color themes with solid color accents */
+    .invitation-card.royal {
+      background: linear-gradient(135deg, #1a2a6c, #2d3436, #1a2a6c);
+      color: #d4af37;
+      border: 2px solid #d4af37;
+      box-shadow: 0 10px 30px rgba(26, 42, 108, 0.3);
+    }
+    .invitation-card.royal .invitation-content {
+      background: rgba(26, 42, 108, 0.3);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .invitation-card.royal .invitation-details {
+      background: rgba(212, 175, 55, 0.05);
+    }
+
+    .invitation-card.romantic {
+      background: linear-gradient(135deg, #ffe6e6, #ffb3b3, #ffe6e6);
+      color: #d6336c;
+      border: 1px solid rgba(214, 51, 108, 0.2);
+      box-shadow: 0 10px 30px rgba(214, 51, 108, 0.15);
+    }
+    .invitation-card.romantic .invitation-content {
+      background: rgba(214, 51, 108, 0.05);
+      border: 1px solid rgba(214, 51, 108, 0.2);
+    }
+    .invitation-card.romantic .invitation-details {
+      background: rgba(255, 230, 230, 0.5);
+    }
+
+    .invitation-card.vintage {
+      background: linear-gradient(135deg, #d4c4a8, #c4b299, #d4c4a8);
+      color: #8b4513;
+      border: 1px solid rgba(139, 69, 19, 0.2);
+      box-shadow: 0 10px 30px rgba(139, 69, 19, 0.15);
+    }
+    .invitation-card.vintage .invitation-content {
+      background: rgba(139, 69, 19, 0.05);
+      border: 1px solid rgba(139, 69, 19, 0.2);
+    }
+    .invitation-card.vintage .invitation-details {
+      background: rgba(212, 196, 168, 0.3);
+    }
+
+    .invitation-card.minimal {
+      background: linear-gradient(135deg, #ffffff, #f5f5f5, #ffffff);
+      color: #000000;
+      border: 2px solid #000000;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .invitation-card.minimal .invitation-content {
+      background: rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    .invitation-card.minimal .invitation-details {
+      background: rgba(245, 245, 245, 0.8);
+    }
+
+    .invitation-card.garden {
+      background: linear-gradient(135deg, #e8f5e9, #c8e6c9, #e8f5e9);
+      color: #2e7d32;
+      border: 1px solid rgba(46, 125, 50, 0.2);
+      box-shadow: 0 10px 30px rgba(46, 125, 50, 0.15);
+    }
+    .invitation-card.garden .invitation-content {
+      background: rgba(46, 125, 50, 0.05);
+      border: 1px solid rgba(46, 125, 50, 0.2);
+    }
+    .invitation-card.garden .invitation-details {
+      background: rgba(200, 230, 201, 0.4);
+    }
+
+    .invitation-card.sunset {
+      background: linear-gradient(135deg, #ff9966, #ff5e62, #ff9966);
+      color: #6a1b9a;
+      border: 1px solid rgba(106, 27, 154, 0.2);
+      box-shadow: 0 10px 30px rgba(106, 27, 154, 0.15);
+    }
+    .invitation-card.sunset .invitation-content {
+      background: rgba(106, 27, 154, 0.05);
+      border: 1px solid rgba(106, 27, 154, 0.2);
+    }
+    .invitation-card.sunset .invitation-details {
+      background: rgba(255, 153, 102, 0.2);
+    }
+
+    /* Enhanced content styles with better contrast */
+    .invitation-content {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 15px;
+    }
+
+    .invitation-header {
+      font-size: 32px;
+      margin-bottom: 25px;
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .invitation-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80px;
+      height: 3px;
+      background: currentColor;
+      opacity: 0.3;
+    }
+
+    .invitation-header::before {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.5;
+    }
+
+    .invitation-details {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 15px 0;
+      padding: 0;
+    }
+
+    .invitation-details div {
+      margin: 0;
+      height: 100%;
+    }
+
+    /* Royal Theme Details */
+    .invitation-card.royal .invitation-details div {
+      background: rgba(26, 42, 108, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      position: relative;
+      border-left: 4px solid #d4af37;
+    }
+
+    .invitation-card.royal .invitation-details div strong {
+      color: #d4af37;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1em;
+    }
+
+    /* Romantic Theme Details */
+    .invitation-card.romantic .invitation-details div {
+      background: rgba(214, 51, 108, 0.05);
+      border-radius: 20px;
+      padding: 15px 25px;
+      box-shadow: 0 2px 10px rgba(214, 51, 108, 0.1);
+      border: 1px solid rgba(214, 51, 108, 0.2);
+    }
+
+    .invitation-card.romantic .invitation-details div strong {
+      color: #d6336c;
+      font-style: italic;
+    }
+
+    /* Vintage Theme Details */
+    .invitation-card.vintage .invitation-details div {
+      background: rgba(139, 69, 19, 0.05);
+      border: 2px solid rgba(139, 69, 19, 0.2);
+      padding: 15px;
+      position: relative;
+      margin: 20px 0;
+    }
+
+    .invitation-card.vintage .invitation-details div::before,
+    .invitation-card.vintage .invitation-details div::after {
+      content: '✦';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8b4513;
+      opacity: 0.4;
+    }
+
+    .invitation-card.vintage .invitation-details div::before {
+      left: 5px;
+    }
+
+    .invitation-card.vintage .invitation-details div::after {
+      right: 5px;
+    }
+
+    /* Minimal Theme Details */
+    .invitation-card.minimal .invitation-details div {
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      padding: 15px 20px;
+      background: rgba(255, 255, 255, 0.7);
+      position: relative;
+      margin: 20px 0;
+    }
+
+    .invitation-card.minimal .invitation-details div::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #000;
+      opacity: 0.1;
+    }
+
+    /* Garden Theme Details */
+    .invitation-card.garden .invitation-details div {
+      background: rgba(46, 125, 50, 0.05);
+      border: 1px dashed rgba(46, 125, 50, 0.3);
+      border-radius: 15px;
+      padding: 15px 20px;
+      position: relative;
+    }
+
+    .invitation-card.garden .invitation-details div strong {
+      color: #2e7d32;
+      font-weight: 600;
+    }
+
+    .invitation-card.garden .invitation-details div::before {
+      content: '✿';
+      position: absolute;
+      left: -20px;
+      color: #2e7d32;
+      opacity: 0.5;
+    }
+
+    /* Sunset Theme Details */
+    .invitation-card.sunset .invitation-details div {
+      background: linear-gradient(135deg, rgba(106, 27, 154, 0.05), rgba(255, 153, 102, 0.05));
+      border-radius: 25px;
+      padding: 15px 30px;
+      border: 1px solid rgba(106, 27, 154, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .invitation-card.sunset .invitation-details div strong {
+      background: linear-gradient(45deg, #6a1b9a, #ff9966);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    /* Common hover effects */
+    .invitation-details div:hover {
+      transform: translateX(5px);
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .invitation-details strong {
+      display: inline-block;
+      margin-right: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+    }
+
+    .invitation-footer {
+      margin-top: 30px;
+      font-style: italic;
+      position: relative;
+      z-index: 1;
+      padding: 20px 15px;
+      font-size: 19px;
+      letter-spacing: 1px;
+    }
+
+    .invitation-footer::before {
+      content: '~';
+      display: block;
+      font-size: 24px;
+      margin-bottom: 10px;
+      opacity: 0.5;
+    }
+
+    .download-btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background-color: #d6336c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Roboto', sans-serif;
+      font-size: 16px;
+      transition: background-color 0.3s;
+    }
+
+    .download-btn:hover {
+      background-color: #c42c61;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
+    }
+
+    .about-section {
+      max-width: 800px;
+      margin: 80px auto;
+      background: linear-gradient(135deg, #fff4f7, #ffe9f1);
+      padding: 60px;
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(214, 51, 108, 0.2);
+      text-align: center;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .about-section h2 {
+      font-family: 'Great Vibes', cursive;
+      font-size: 40px;
+      color: #d6336c;
+      margin-bottom: 20px;
+    }
+
+    .about-section p {
+      font-size: 18px;
+      color: #444;
+      line-height: 1.8;
+      margin-top: 15px;
+    }
+
+    footer {
+      background: #c4b2b2;
+      color: white;
+      padding: 50px 20px;
+      margin-top: 80px;
+    }
+
+    footer .footer-content {
+      max-width: 1100px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    footer input[type="email"] {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      margin-right: 10px;
+      width: 250px;
+    }
+
+    footer button {
+      background-color: #d6336c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+
+    footer p {
+      margin-top: 30px;
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .wedding-couple-illustration {
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 20px;
+      position: relative;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cstyle%3E.bride-dress%7Bfill:%23fff;stroke:%23d4af37;stroke-width:2%7D.groom-suit%7Bfill:%23333;stroke:%23d4af37;stroke-width:2%7D.face%7Bfill:%23ffdbb4%7D.hair%7Bfill:%23333%7D%3C/style%3E%3Ccircle cx='100' cy='100' r='98' fill='none' stroke='%23d4af37' stroke-width='2'/%3E%3Cpath class='bride-dress' d='M80 80c0 20-10 50-10 70h-20c0-20 10-50 10-70z'/%3E%3Cpath class='groom-suit' d='M120 80c0 20 10 50 10 70h20c0-20-10-50-10-70z'/%3E%3Ccircle class='face' cx='85' cy='70' r='15'/%3E%3Ccircle class='face' cx='115' cy='70' r='15'/%3E%3Cpath class='hair' d='M85 55c0-5 5-10 10-10s10 5 10 10z'/%3E%3Cpath class='hair' d='M115 55c0-5 5-10 10-10s10 5 10 10z'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .wedding-card-content {
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .wedding-names {
+      font-family: 'Great Vibes', cursive;
+      font-size: 36px;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+
+    .wedding-details {
+      font-family: 'Playfair Display', serif;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      nav h1 {
+        font-size: 32px;
+      }
+
+      nav ul {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .container {
+        margin: 20px auto;
+        padding: 15px;
+        width: 95%;
+      }
+
+      h2 {
+        font-size: 28px;
+      }
+
+      .invitation-card {
+        padding: 15px;
+        margin: 15px auto;
+      }
+
+      .invitation-header {
+        font-size: 24px;
+      }
+
+      .invitation-details {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .about-section {
+        margin: 40px auto;
+        padding: 30px;
+      }
+
+      .about-section h2 {
+        font-size: 32px;
+      }
+
+      footer {
+        padding: 30px 15px;
+      }
+
+      footer input[type="email"] {
+        width: 100%;
+        margin-bottom: 10px;
+      }
+
+      .wedding-couple-illustration {
+        width: 150px;
+        height: 150px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav h1 {
+        font-size: 28px;
+      }
+
+      .container {
+        padding: 10px;
+      }
+
+      h2 {
+        font-size: 24px;
+      }
+
+      input, select, button {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      .invitation-card {
+        padding: 10px;
+      }
+
+      .invitation-header {
+        font-size: 20px;
+      }
+
+      .invitation-footer {
+        font-size: 16px;
+      }
+    }
+
+    /* Touch-friendly Interactions */
+    button, .download-btn {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    input, select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      touch-action: manipulation;
+    }
+
+    /* Loading Animation */
+    .loading {
+      position: relative;
+      padding: 20px;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 30px;
+      height: 30px;
+      margin: -15px 0 0 -15px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #d6336c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Form Field Focus States */
+    input:focus, select:focus {
+      outline: none;
+      border-color: #d6336c;
+      box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.2);
+    }
+
+    /* Improved Button States */
+    button:active {
+      transform: scale(0.98);
+    }
+
+    /* Accessibility Improvements */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* High Contrast Mode Support */
+    @media (forced-colors: active) {
+      button {
+        border: 2px solid currentColor;
+      }
+      
+      .invitation-card {
+        border: 2px solid currentColor;
+      }
+    }
+
+    /* Floating Hearts Animation */
+    .floating-hearts {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .heart {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #ff0000;
+      transform: rotate(45deg);
+      opacity: 0.4;
+      animation: float-up 12s linear infinite;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      background: #ff0000;
+      border-radius: 50%;
+    }
+
+    .heart::before {
+      left: -15px;
+    }
+
+    .heart::after {
+      top: -15px;
+    }
+
+    @keyframes float-up {
+      0% {
+        transform: rotate(45deg) translateY(100vh) scale(0.6);
+        opacity: 0;
+      }
+      5% {
+        opacity: 0.4;
+      }
+      95% {
+        opacity: 0.4;
+      }
+      100% {
+        transform: rotate(45deg) translateY(-100px) scale(0.6);
+        opacity: 0;
+      }
+    }
+
+    /* Adjust z-index for other elements */
+    .container, nav, footer, .about-section {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Reduce animation on mobile */
+    @media (max-width: 768px) {
+      .heart {
+        width: 25px;
+        height: 25px;
+      }
+      
+      .heart::before,
+      .heart::after {
+        width: 25px;
+        height: 25px;
+      }
+      
+      .heart::before {
+        left: -12.5px;
+      }
+      
+      .heart::after {
+        top: -12.5px;
+      }
+    }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .heart {
+        animation: none;
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-hearts" id="floatingHearts"></div>
+
+  <nav>
+    <h1>InvitationAI</h1>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Contact</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <h2>Generate Your Invitation Card</h2>
+    <form id="inviteForm">
+      <div id="regularNameField">
+        <label>Host Name:</label>
+        <input type="text" id="names" required>
+      </div>
+
+      <div id="weddingNamesField" style="display: none;">
+        <label>Bride's Name:</label>
+        <input type="text" id="brideName" required>
+        <label>Groom's Name:</label>
+        <input type="text" id="groomName" required>
+      </div>
+
+      <label>Event Type:</label>
+      <select id="eventType" onchange="toggleNameFields()">
+        <option>Wedding</option>
+        <option>Birthday</option>
+        <option>Corporate Event</option>
+      </select>
+
+      <label>Date:</label>
+      <input type="date" id="date" required>
+
+      <label>Time:</label>
+      <input type="time" id="time">
+
+      <label>Venue:</label>
+      <input type="text" id="venue" required>
+
+      <label>Theme:</label>
+      <select id="theme">
+        <option>Traditional</option>
+        <option>Modern</option>
+        <option>Cultural</option>
+      </select>
+
+      <label>Color Theme:</label>
+      <select id="colorTheme">
+        <option value="royal">Royal (Deep Blue & Gold)</option>
+        <option value="romantic">Romantic (Blush & Rose)</option>
+        <option value="vintage">Vintage (Sepia & Bronze)</option>
+        <option value="minimal">Minimal (Black & White)</option>
+        <option value="garden">Garden (Sage & Floral)</option>
+        <option value="sunset">Sunset (Orange & Purple)</option>
+      </select>
+
+      <label>Language:</label>
+      <select id="language">
+        <option>English</option>
+        <option>Hindi</option>
+        <option>Arabic</option>
+      </select>
+
+      <button type="button" onclick="generateText()" id="generateBtn">Generate Invitation</button>
+    </form>
+
+    <div id="result" style="display: none;">
+      <h3>Your Prompt</h3>
+      <textarea rows="4" id="promptOutput" style="width:100%; margin-top: 10px;"></textarea>
+      <div id="generatedCard"></div>
+      <div id="errorMessage" style="display: none; color: #d6336c; padding: 20px; text-align: center;"></div>
+    </div>
+  </div>
+  <section class="about-section">
+    <h2>About InvitationAI</h2>
+    <p>
+      <strong>InvitationAI</strong> is an intelligent web-based tool designed to help you create stunning and personalized digital invitation cards using the power of artificial intelligence.
+      Whether it's a wedding, birthday, or corporate event — our generator transforms your event details into a professional invitation message in seconds.
+    </p>
+    <p>
+      ✨ <strong>Features:</strong><br>
+      – AI-generated invitation messages<br>
+      – Custom themes and multi-language support<br>
+      – Real-time card preview with aesthetic design<br>
+      – Built by students under the <strong>AI Samadhan</strong> initiative
+    </p>
+  </section>
+  
+
+  <footer>
+    <div class="footer-content">
+      <h2>Subscribe to our newsletter</h2>
+      <input type="email" placeholder="Input your email">
+      <button>Subscribe</button>
+      <p>© 2024 Brand, Inc. • Privacy • Terms • Sitemap</p>
+    </div>
+  </footer>
+
+  <script>
+    // Add touch event support
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Initialize form validation
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('inviteForm');
+      const inputs = form.querySelectorAll('input, select');
+      
+      inputs.forEach(input => {
+        input.addEventListener('input', function() {
+          if (this.checkValidity()) {
+            this.classList.remove('invalid');
+          } else {
+            this.classList.add('invalid');
+          }
+        });
+      });
+    });
+
+    function toggleNameFields() {
+      const eventType = document.getElementById("eventType").value;
+      const regularNameField = document.getElementById("regularNameField");
+      const weddingNamesField = document.getElementById("weddingNamesField");
+
+      if (eventType === "Wedding") {
+        regularNameField.style.display = "none";
+        weddingNamesField.style.display = "block";
+        document.getElementById("names").required = false;
+        document.getElementById("brideName").required = true;
+        document.getElementById("groomName").required = true;
+      } else {
+        regularNameField.style.display = "block";
+        weddingNamesField.style.display = "none";
+        document.getElementById("names").required = true;
+        document.getElementById("brideName").required = false;
+        document.getElementById("groomName").required = false;
+      }
+    }
+
+    async function generateText() {
+      // Show loading state
+      const generateBtn = document.getElementById("generateBtn");
+      const originalText = generateBtn.textContent;
+      generateBtn.textContent = "Generating...";
+      generateBtn.disabled = true;
+
+      const eventType = document.getElementById("eventType").value;
+      let names;
+      
+      if (eventType === "Wedding") {
+        const brideName = document.getElementById("brideName").value;
+        const groomName = document.getElementById("groomName").value;
+        names = `${brideName} & ${groomName}`;
+      } else {
+        names = document.getElementById("names").value;
+      }
+
+      const date = document.getElementById("date").value;
+      const time = document.getElementById("time").value;
+      const venue = document.getElementById("venue").value;
+      const theme = document.getElementById("theme").value;
+      const colorTheme = document.getElementById("colorTheme").value;
+      const language = document.getElementById("language").value;
+
+      // Add dynamic headers based on event type
+      const weddingHeaders = [
+        "Celebration of Love",
+        "Wedding Celebration",
+        "Unite in Marriage",
+        "Joining Hearts",
+        "Wedding Ceremony"
+      ];
+
+      const birthdayHeaders = [
+        "Birthday Celebration",
+        "Special Day",
+        "Birthday Bash",
+        "Celebration Time",
+        "Birthday Party"
+      ];
+
+      const corporateHeaders = [
+        "Business Summit",
+        "Corporate Gathering",
+        "Professional Meet",
+        "Business Conference",
+        "Executive Event"
+      ];
+
+      function getRandomHeader(eventType) {
+        let headers;
+        switch(eventType) {
+          case "Wedding":
+            headers = weddingHeaders;
+            break;
+          case "Birthday":
+            headers = birthdayHeaders;
+            break;
+          case "Corporate Event":
+            headers = corporateHeaders;
+            break;
+          default:
+            return eventType;
+        }
+        return headers[Math.floor(Math.random() * headers.length)];
+      }
+  
+      const prompt = `Write a concise, elegant invitation in ${language} for a ${theme} style ${eventType} with a ${colorTheme} color theme. The host/couple organizing the event is: ${names}. Do not mention any other names or characters. Do not include any invitee names. Date: ${date}, Time: ${time}, Venue: ${venue}. Keep it under 90 words, use poetic language, and maintain a warm, inviting tone. Focus on the essential details while being culturally respectful.`;
+  
+      document.getElementById("promptOutput").value = prompt;
+      document.getElementById("result").style.display = "block";
+      document.getElementById("generatedCard").innerHTML = '<div class="loading">Generating your beautiful invitation...</div>';
+  
+      try {
+        const response = await fetch("http://localhost:3300/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ message: prompt })
+        });
+  
+        const data = await response.json();
+        
+        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+
+        const formattedTime = new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        const cardHTML = `
+          <div class="invitation-card ${colorTheme}" data-event="${eventType}">
+            <div class="invitation-header">${getRandomHeader(eventType)}</div>
+            <div class="invitation-content">
+              ${data.reply.replace(/\n/g, '<br>')}
+            </div>
+            <div class="invitation-details">
+              <div><strong>Date:</strong> ${formattedDate}</div>
+              <div><strong>Time:</strong> ${formattedTime}</div>
+              <div><strong>Venue:</strong> ${venue}</div>
+            </div>
+            <div class="invitation-footer">
+              Hosted by ${names}
+            </div>
+          </div>
+          <button class="download-btn" onclick="downloadInvitation()">Download Invitation</button>
+        `;
+
+        document.getElementById("generatedCard").innerHTML = cardHTML;
+        generateBtn.textContent = originalText;
+        generateBtn.disabled = false;
+
+      } catch (error) {
+        document.getElementById("generatedCard").innerHTML = '<div class="error">Something went wrong. Please try again.</div>';
+        console.error("Fetch Error:", error);
+        generateBtn.textContent = originalText;
+        generateBtn.disabled = false;
+      }
+    }
+
+    function downloadInvitation() {
+      const cardElement = document.querySelector('.invitation-card');
+      const downloadBtn = document.querySelector('.download-btn');
+      const originalText = downloadBtn.textContent;
+      
+      downloadBtn.textContent = "Preparing download...";
+      downloadBtn.disabled = true;
+      
+      // Create a temporary container to ensure proper rendering
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '-9999px';
+      document.body.appendChild(tempContainer);
+      
+      // Clone the card and add it to the temporary container
+      const cardClone = cardElement.cloneNode(true);
+      tempContainer.appendChild(cardClone);
+      
+      // Add styles to ensure proper rendering
+      cardClone.style.width = '600px';
+      cardClone.style.margin = '0 auto';
+      cardClone.style.padding = '40px';
+      cardClone.style.boxSizing = 'border-box';
+      
+      // Use html2canvas to capture the card
+      html2canvas(cardClone, {
+        scale: 2, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: null
+      }).then(canvas => {
+        // Create PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        
+        // Add the canvas image to the PDF
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, canvas.width, canvas.height);
+        
+        // Download the PDF
+        pdf.save('invitation.pdf');
+        
+        // Clean up
+        document.body.removeChild(tempContainer);
+        downloadBtn.textContent = originalText;
+        downloadBtn.disabled = false;
+      }).catch(error => {
+        console.error("Download Error:", error);
+        downloadBtn.textContent = "Download failed. Try again.";
+        setTimeout(() => {
+          downloadBtn.textContent = originalText;
+          downloadBtn.disabled = false;
+        }, 2000);
+      });
+    }
+
+    // Add touch event support for mobile devices
+    if (isTouchDevice) {
+      document.querySelectorAll('button, .download-btn').forEach(button => {
+        button.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.98)';
+        });
+        
+        button.addEventListener('touchend', function() {
+          this.style.transform = 'scale(1)';
+        });
+      });
+    }
+
+    // Floating Hearts Animation
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.className = 'heart';
+      
+      // Random position
+      const startPosition = Math.random() * window.innerWidth;
+      heart.style.left = `${startPosition}px`;
+      
+      // Random delay
+      const delay = Math.random() * 3;
+      heart.style.animationDelay = `${delay}s`;
+      
+      // Random size
+      const size = 0.6 + Math.random() * 0.6;
+      heart.style.transform = `rotate(45deg) scale(${size})`;
+      
+      document.getElementById('floatingHearts').appendChild(heart);
+      
+      // Remove heart after animation completes
+      setTimeout(() => {
+        heart.remove();
+      }, 12000);
+    }
+
+    // Create hearts periodically
+    function startHeartAnimation() {
+      // Create initial hearts immediately
+      for (let i = 0; i < 30; i++) {
+        createHeart();
+      }
+      
+      // Continue creating hearts
+      setInterval(createHeart, 500);
+    }
+
+    // Start animation immediately
+    startHeartAnimation();
+
+    // Adjust hearts on window resize
+    window.addEventListener('resize', () => {
+      const hearts = document.querySelectorAll('.heart');
+      hearts.forEach(heart => {
+        const startPosition = Math.random() * window.innerWidth;
+        heart.style.left = `${startPosition}px`;
+      });
+    });
+  </script>
+</body>
+</html>
